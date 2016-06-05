@@ -24,3 +24,6 @@ git commit -m '<commit message>' <filename>
 e.g.
 mkdir src
 git mv hello.cpp src
+* Pushing
+** Push commits to remote master (commonly used for github)
+git push origin master
