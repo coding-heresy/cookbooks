@@ -1,0 +1,22 @@
+-*- Mode: Outline -*-
+
+* Building from scratch
+** Create initial source file set.
+*** Use standard project hierarchy
+src -> source files (.c, .cpp, etc)
+include -> header files that will be exported (.c, .hpp, etc)
+** Run autoscan
+** Rename configure.scan -> configure.ac
+** Edit initial configure.ac
+*** Set project name
+*** Set version number
+*** Set bug report address
+*** Add AC_CHECK_HEADERS for required headers
+Under the "Checks for headers files" comment.
+*** Add generation of Makefiles
+**** Add immediately prior to AC_OUTPUT
+**** Standard
+AC_CONFIG_FILES([Makefile src/Makefile])
+* Eliminating the standard CXXFLAGS option provided by configure/automake
+Run configure as: ./configure 'CXXFLAGS='
+

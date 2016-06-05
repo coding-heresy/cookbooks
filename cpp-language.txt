@@ -1,0 +1,275 @@
+-*- Mode: Outline -*-
+
+* Allocating an array with 'new' operator
+uint8_t value = new uint8_t [size];
+* Template class.
+** Basic declaration/definition
+template<typename class1, typename class2, ...>
+class TClass {
+      ...
+};
+
+** Default arguments.
+template<typename class1, typename class2 = DefaultClass, ...>
+class TClassWithDefault
+{
+  ...
+};
+
+NOTE: as with default function parameters, it makes no sense to have a
+non default argument argY after a default argument argX because argX
+would always need to be specified.
+
+* Static constants inside classes
+class Foo
+{
+public:
+...
+private:
+  static const double MAX = 69.0;
+};
+** For unsigned integer constants, better to use enum
+class Foo
+{
+public:
+...
+private:
+  enum {
+    VALUE = 20010911
+  };
+};
+
+* Decimal precision in streams
+** Set notation to fixed (scientific is alternative).
+cout.setf(ios::fixed,ios::floatfield);
+** Set number of digits past decimal in fixed and scientific.
+cout.precision(5);
+* Reading text file data
+#include <fstream>
+...
+ifstream input;
+input.open(fileName.c_str());
+string line;
+if (input.is_open()) {
+  while (!input.eof()) {
+    getline(input, line);
+    ...
+  }
+}
+** also
+#include <iostream>
+#include <fstream> // include of fstream is required
+
+   ifstream input(argv[0], ifstream::in);
+   string raw;
+   if (input.good()) {
+      getline(input, raw);
+   }
+   while (input.good()) {
+      // process string
+      getline(input, raw);
+   }
+* Writing text file output
+#include <fstream>
+...
+ofstream output(fileName.c_str(), ofstream::out);
+output << "Hello file output!" << endl;
+output.close();
+* Declaring friend functions
+class Foo
+{
+  // ...
+  friend void bar(const Foo &);
+  // ...
+};
+
+void
+bar(const Foo &arg)
+{
+  // ...
+}
+
+* generate output with ostream_iterator
+#include <iostream>
+#include <string>
+#include <iterator>
+#include <algorithm>
+#include <vector>
+
+   std::string goingToOutput;
+   std::ostream_iterator<char> coutItr(std::cout, ""); // Replace "" with delimiter if desired
+   std::copy(goingToOutput.begin(), goingToOutput.end(), coutItr);
+** see also ostream_innerator
+Correctly places the delimiter internal to the list.
+* generate a temporary file
+boost::filesystem handles this, see the Boost section.
+* delete entries from a multimap (prior to C++14)
+typedef std::multimap<keytype, valuetype> Multimap;
+typedef std::pair<Multimap::iterator, Multimap::iterator> EqualRange;
+Multimap mulmap;
+// ... add elements to mulmap here ...
+// find all elements with a given key
+keytype testkey = <some test key value>;
+const EqualRange eql = mulmap.equal_range(testkey);
+Multimap::iterator itr = eql.first;
+while (eql.second != itr) {
+   Multimap::iterator sacrificial = itr;
+   // NOTE: need to increment iterator here because it is invalidated
+   // by erase()
+   ++itr;
+   mulmap.erase(sacrificial);
+}
+* C++11/14
+** Use unique_ptr as a data member
+class Foo
+{
+public:
+   std::unique_ptr<Bar> bar;
+};
+
+// ...
+
+Foo foo;
+foo.bar.reset(new Bar);
+
+** Code move constructor and move assignment operator
+*** move constructor
+class MoveConstructable
+{
+public:
+   MoveConstructable(MoveConstructable&& src) // takes an rvalue reference to the class type as its parameter
+      : valuePtr_(nullptr)
+   {
+      valuePtr_ = src.valuePtr_;  // assign to the class members of the object being constructed values from the class members from the source object
+      src.valuePtr_ = nullptr;  // assign the class members of the source object to values that prevent something bad from happening in its destructor
+   }
+private:
+   ValueType* valuePtr_;
+};
+*** move assignment operator
+class MoveConstructable
+{
+public:
+   MoveConstructable&
+   operator=(MoveConstructable&& rhs) // takes an rvalue reference to the class type as its parameter
+   {
+      if (this != &rhs) {  // avoid self-assignment
+         delete valuePtr_;  // free resources associated with the object being assigned to
+         valuePtr = rhs.valuePtr_;  // assign to the class members of the object being assigned to values from the class members from the source object
+         rhs.valuePtr_ = nullptr;  // assign the class members of the source object to values that prevent something bad from happening in its destructor
+      }
+      return *this;  // return a reference to the object being assigned to
+   }
+private:
+   ValueType* valuePtr_;
+};
+** Use type_traits + static_assert to enforce requirements on template arguments
+*** e.g.
+#include <type_traits>
+using namespace std;
+struct Foo { void fn() };
+struct Bar { void no_fn() };
+template<typename Helper>
+struct Helped
+{
+   static_assert(is_member_function_pointer<decltype(&Helper::fn)>::value, "type 'Helper' needs a member function named 'fn'");
+   void fn() { helper.fn(); }
+   Helper helper;
+};
+int main(const int argc, const char *argv[])
+{
+   Helped<Foo> helpedByFoo; // compiles fine
+   helpedByFoo.fn();
+   Helped<Bar> helpedByBar; // compile fails in the static_assert of struct Helped
+   helpedByBar.fn();
+}
+* Boost
+** Log library dependencies
+-lboost_log -lboost_system -lboost_thread -lpthread -lrt
+
+** Program options
+*** Include file
+#include <boost/program_options.hpp>
+*** Simplify the resolution
+namespace po = boost::program_options;
+*** Read option values into a variables map
+po::variables_map options;
+po::options_description desc("options");
+double copiedValue;
+desc.add_options()
+  /* --help or -h produces help message */
+  ("help,h", "help message")
+  /* --arg or -a is a string argument */
+  ("arg,a", po::value<string>(), "string argument")
+  /* --int or -i is an integer argument */
+  ("int,i", po::value<int>(), "integer argument")
+  /* --default or -d is an unsigned argument with default */
+  ("default,d", po::value<unsigned>()->default_value(69), "defaulted option")
+  /* --copy or -c is a double value that is automatically copied to a variable */
+  ("copy,c", po::value<double>(&copiedValue), "copied option");
+po::store(po::parse_command_line(argc, argv, desc), options)
+*** Print usage when 'help' argument exists.
+if (options.count("help")) {
+   cerr << "Usage: " << argv[0] << desc << endl;
+}
+** Unit test
+*** check that two values are equal
+BOOST_CHECK_EQUAL(val1, val2);
+*** check that a boolean value is true
+BOOST_CHECK(boolVal);
+*** check that a function call throws a specific type of exception
+BOOST_CHECK_THROW(call(), ExceptionType);
+*** get XML output for use in Jenkins
+Add the following arguments to the test program:
+  --report_level=detailed --report_format=xml
+**** reference
+http://stackoverflow.com/questions/15943091/boost-unit-tests-with-xunit-plugin-in-jenkins-do-not-work
+
+** Optional
+*** Return an optional value
+boost::optional<int> convert(const std::string& text)
+{
+  std::stringstream s(text);
+  int i;
+  if ((s >> i) && s.get() == std::char_traits<char>::eof())
+    return i;
+  else
+    return boost::none;
+}
+*** Reassign an optional value
+boost::optional<int> convert(const std::string& text)
+{
+  boost::optional<int> ans;
+  std::stringstream s(text);
+  int i;
+  if ((s >> i) && s.get() == std::char_traits<char>::eof())
+    ans = i;
+
+  return ans;
+}
+** Filesystem
+*** Create temporary file
+#include <string>
+#include <boost/filesystem.hpp>
+boost::filesystem::path temp = boost::filesystem::unique_path();
+const std::string tempstr    = temp.native();  // optional
+*** Check for file existence
+boost::filesystem::path filePath;
+boost::filesystem::exists(filePath);
+*** Remove (AKA delete) a file
+boost::filesystem::path filePath;
+boost::filesystem::remove(filePath);
+** compare_pointees
+From boost/utility/compare_pointees.hpp
+
+Useful for creating a set of pointers (including smart pointers) to
+objects, e.g.: (C++98)
+  struct Foo { int v; };
+  bool operator<(const Foo& lhs, const Foo& rhs) { return lhs.v < rhs.v; }
+  typedef std::set<Foo*, boost::less_pointees_t<Foo*> > FooSet;
+
+e.g. sorting arrays of pointers: (C++11)
+  vector<int*> ipVec{ new int(3), new int(2), new int(1) };
+  sort(ipVec.begin(), ipVec.end(), boost::less_pointees_t<int*>());
+* types capable of holding pointer values for display/print
+uintptr_t

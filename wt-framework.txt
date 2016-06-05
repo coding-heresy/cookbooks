@@ -1,0 +1,28 @@
+-*- Mode: Outline -*-
+
+* Running a Wt program
+<prog-name> --http-address=0.0.0.0 --http-port=8080 --docroot .
+* Passing arguments from a signal to a slot
+
+#include <Wt/WSignalMapper>
+#include <Wt/WText>
+
+...
+// Definition of Test class
+...
+void Test::createWidgets()
+{
+  Wt::WSignalMapper<Wt::WText> *myMap = new Wt::WSignalMapper<Wt::WText*>(this);
+
+  myMap->mapped.connect(SLOT(this, Test::onClick));
+  myMap->mapConnect(text1->clicked, text1);
+  myMap->mapConnect(text2->clicked, text2);
+  myMap->mapConnect(text3->clicked, text3);
+}
+
+void Test::onClick(Wt::WText* source)
+{
+  // source is where it is coming from
+  // ...
+}
+

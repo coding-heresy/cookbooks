@@ -1,0 +1,27 @@
+-*- Mode: Outline -*-
+
+* Remove a column from a data frame by name.
+frame$column.name <- NULL
+* Add a grid to a plot.
+Run the plot command and then execute the command "grid()".
+* Multiple plots in one window
+par(mfrow=c(<row count>,<column count>))
+
+Plot window acts as a FIFO queue, with commands such as grid() and
+abline() operating on the most recently generated plot.
+
+* Writing a function
+foo <- function(param1, param2) {
+}
+
+* Loading functions from a file
+source("filename")
+
+* Filtering factors (hax, THTBABW)
+factor.levels <- unique(frame$field)
+
+Examine the resulting factor.levels object to determine the index of
+the desired factor value.
+
+frame.flag <- frame$field == factor.levels[index]
+

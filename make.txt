@@ -1,0 +1,37 @@
+-*- Mode: Outline -*-
+
+* special variables
+** $@
+The file name of the target of the rule.
+** $?
+The names of all the prerequisites that are newer than the target,
+with spaces between them.
+** $^
+The names of all the prerequisites, with spaces between them.
+* phony targets
+** e.g. clean object files
+.PHONY: clean
+clean:
+	rm *.o
+*** required in case a file named 'clean' ever appears in the directory
+** e.g. build all targets
+all: prog1 prog2 prog3
+.PHONY: all
+
+prog1: prog1.c
+       gcc -o prog1 prog1.c
+*** required in case a file named 'all' ever appears in the directory
+** e.g. prerequisites to a rule
+.PHONY: cleanall cleanobj cleandiff
+
+cleanall: cleanobj cleandiff
+	  rm prog
+
+cleanobj:
+	rm *.o
+
+cleandiff
+	rm *.diff
+* Implicit rules
+$< the name of the related file that caused the action.
+$* the prefix shared by target and dependent files. 

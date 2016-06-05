@@ -1,0 +1,29 @@
+-*- Mode: Outline -*-
+
+* Required arguments to gcc/g++
+-fprofile-arcs -ftest-coverage
+Also use -O0 to turn off all optimizations so that line numbers in the
+gcov output match actual file line numbers.
+
+NOTE: this causes gcc to emit a separate file with a .gcno suffix for
+each source file IN THE SAME DIRECTORY AS THE OTHER OUTPUT.
+* How to collect data.
+** Run the test set.
+First run produces a .gcda for each .gcno file in the program,
+subsequent runs most likely update these files.
+** Run gcov on each individual .gcno file to produce a .gcov file
+This is where things get stupid, the .gcno files may not know exactly
+where the associated .gcda files are, even if they are in the same
+directory, so the -o argument may need to be supplied in order to find
+the .gcda file.  For example, for the program foo in ./src/foo.c, the
+.gcno file may be ./obj/foo.gcno, and the .gcda file may be
+./obj/foo.gcda, but the gcov command line should be:
+
+    gcov -o ./obj/foo.gcda ./obj/foo.gcno
+
+The location of the .gcda files may be determined by running the
+strings program on the executable and object files and piping the
+result to "egrep '.gcda$'", e.g.
+
+    strings ./obj/foo.o | egrep '.gcda$'
+

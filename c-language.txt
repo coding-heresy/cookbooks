@@ -1,0 +1,50 @@
+-*- Mode: Outline -*-
+
+* Define a constant static array of strings.
+static const char *stringconstants[] = {
+       "string1",
+       "string2",
+       "etc."
+};
+
+* Function pointer syntax.
+Syntax for function pointer returning void and taking an int argument:
+
+void (*fcn)(int);
+
+* Convert file descriptor into FILE *
+FILE* fp = fdopen(fd, "w");
+
+* Get the file descriptor associated with a FILE *
+FILE *fp = /* some way of opening a file pointer */
+int fd = fileno(fp);
+
+* Execute a program and send input to it/read output from it.
+#include <stdio.h>
+/* Second argument is "r" for reading or "w" for writing */
+FILE *fp = popen("command line to pass to shell", "r");
+/* Use fp like any normal FILE * */
+pclose(fp);
+
+* Make a temporary directory
+char *mkdtemp(char *template);
+
+Returns the name of a uniquely-named temporary directory by requiring
+that the last 6 characters of template be XXXXXX and replacing them
+with a string that makes the directory name unique and then creating
+the directory with mkdir.
+
+NOTE: template must be a character array, not a constant, since it
+will be overwritten by the function.
+
+* Make a temporary file
+int mkstemp(char *template);
+
+Returns a uniquely-named temporary file by requiring that the last 6
+characters of template be XXXXXX and replacing them with a string that
+makes the filename name unique and then creating the file with
+open.
+
+NOTE: template must be a character array, not a constant, since it
+will be overwritten by the function.
+

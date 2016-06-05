@@ -1,0 +1,61 @@
+-*- Mode: Outline -*-
+
+* determine OS distribution and version
+** cat /etc/lsb-release
+** /usr/bin/lsb_release -a
+* users and groups
+** add user
+NOTE: forces group and numeric user ID
+/usr/sbin/useradd -g <group name or number> -u <uid> <user name>
+** add group
+/usr/sbin/groupadd <group name>
+** add user to group
+/usr/sbin/usrmod -a -G <group name> <user name>
+* mount points
+** mount an nfs directory
+mkdir -p /mnt/nfs/home/bdavis
+mount 172.26.90.61:/vol/vol1/home_dirs/bdavis /mnt/nfs/home/bdavis
+*** source IP = 172.26.90.61
+*** fully qualified path on source = /vol/vol1/home_dirs/bdavis
+*** local location = /mnt/nfs/home/bdavis
+*** list all filesystems, which will give info on mounted filesystems
+/bin/df -h
+Useful to get detailed info for the mount command
+*** reference
+also explains how to set up an entry in fstab:
+https://www.digitalocean.com/community/tutorials/how-to-set-up-an-nfs-mount-on-centos-6
+** mount a .iso (e.g. CD or DVD)
+mount -t iso9660 -o loop <full path to .iso file> <mount point>
+*** e.g.
+mount -t iso9660 -o loop /media/DEV-BOX-INSTALLER/CentOS-6.7-x86_64-bin-DVD1.iso /mnt/DVD1
+*** reference
+http://www.tecmint.com/how-to-mount-and-unmount-an-iso-image-in-linux/
+* devices and file systems
+** list all block devices
+*** lsblk
+Run as root.
+** list partitions
+*** fdisk -l
+Run as root.
+*** parted -l
+Run as root
+*** resource
+http://www.cyberciti.biz/faq/linux-list-disk-partitions-command/
+* network test
+** ping cs.cornell.edu
+Test ability to resolve and contact machines.
+*** ping 128.84.96.10
+Test ability to contact machines (this is the IP address of
+cs.cornell.edu), if previous ping test fails and this succeeds, then
+connectivity is available, but there is a problem with DNS.
+* Extracting tracks from ipod and converting to mp3
+** gtkpod
+1) Select tracks
+2) File-> Export Tracks From Database -> Selected Tracks
+Saves tracks as m4a.
+** lame
+Command line:
+lame <file>.m4a <file>.mp3
+* Listing all block devices.
+Useful for finding partitions on a drive.
+** lsblk

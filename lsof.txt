@@ -1,0 +1,4 @@
+-*- Mode: Outline -*-
+
+* list open TCP ports
+lsof -iTCP -P -n

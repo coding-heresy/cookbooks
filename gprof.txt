@@ -1,0 +1,17 @@
+-*- Mode: Outline -*-
+
+* Required arguments to gcc/g++
+-pg
+writes profile information to the output.
+* operation
+** compile with correct gcc/g++ options
+** execute the program
+File "gmon.out" is produced in the local directory.
+** execute gprof to produce the analysis file.
+e.g. for program "foo":
+  gprof foo gmon.out > analysis.txt
+* suppress verbose blurbs
+Standard output of gprof includes descriptive text for various fields,
+which can be eliminated by using the -b option, e.g.
+  gprof -b foo gmon.out > analysis.txt
+

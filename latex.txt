@@ -1,0 +1,40 @@
+-*- Mode: Outline -*-
+
+* Greek letters
+** lower case
+\alpha
+\eta
+\nu
+\tau   
+\beta
+\theta
+\xi
+\upsilon
+\gamma
+\iota
+ o
+\phi   
+\delta
+\kappa
+\pi
+\chi
+\epsilon
+\lambda
+\rho
+\psi   
+\zeta
+\mu
+\sigma
+\omega 
+** upper case
+\Gamma
+\Lambda
+\Sigma
+\Psi
+\Delta
+\Xi
+\Upsilon
+\Omega
+\Theta
+\Pi
+\Phi

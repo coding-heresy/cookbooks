@@ -1,0 +1,31 @@
+-*- Mode: Outline -*-
+
+* split a string on a delimiter other than ' ' (space)
+** e.g. using delimiter '.'
+echo 4.3.3 | awk -F'.' '{print $1$2}'
+produces '43'
+* print broken-out portions of pattern matches
+** example of printing partial IP address from results of ifconfig -a
+ifconfig -a | egrep -v '127\.0\.0\.1' | awk 'match($0, /inet addr\:[0-9]+\.[0-9]+\.[0-9]+/) { print substr($0, RSTART + 10, RLENGTH - 10) }'
+*** NOTES
+match($0, /<regex>/) passes lines which match the <regex> to the body
+enclosed in curly braces.
+
+substr($0, <start offset>, <length>) breaks out a substring of the
+string in $0, which in this case contains only the part which matches
+the <regex>, not the entire line.
+
+RSTART is the offset of the start of the substring matching <regex>.
+
+RLENGTH is the length of the substring matching <regex>.
+
+Addition of 10 to RSTART and subtraction of 10 from RLENGTH accounts
+for removing "inet addr:" from the printed result
+* break up a file into sections based on values in the file
+awk '/YOUR_TEXT_HERE/{n++}{print >"out" n ".txt" }' final.txt
+** Example: split SVN diff into sections by file
+awk '/^Index/{n++}{print >"diff" n ".out" }' diff.out
+*** explanation
+Takes a file "diff.out" and splits it into diff1.out through diffn.out
+where n is the number of file diffs contained in the main file (file
+diffs start with the line "Index: <relative path to file>").

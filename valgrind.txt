@@ -1,0 +1,25 @@
+-*- Mode: Outline -*-
+
+* More detailed checking with memcheck
+--tool=memcheck --leak-check=full --show-reachable=yes --malloc-fill=0 --free-fill=0
+** Verbose output, including suppression counts
+-v
+** Generate suppression rules for all displayed errors
+--gen-suppressions=all
+** Use a specific suppression file in addition to the defaults
+--suppressions=/path/to/file.supp
+* Callgrind profiler
+** program build
+Compile with "-g" option to get debugging symbols, but leave
+optimizations on.
+** operation
+Specify --tool=callgrind argument on the command line.
+e.g. for program "foo":
+  valgrind --tool=callgrind foo
+** kcachegrind
+*** Run kcachegrind
+*** Press "Open" button on main toolbar
+*** Navigate through the file system to find the callgrind output file
+Typically called "callgrind.out.<pid>"
+*** Select the callgrind output file and press the open button
+

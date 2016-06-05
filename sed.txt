@@ -1,0 +1,31 @@
+-*- Mode: Outline -*-
+
+* Single substitution
+echo foo | sed 's/f/b/'
+outputs "boo"
+
+echo foo | sed 's/o/b/'
+outputs "fbo"
+
+* Multiple/global substitution
+echo foo | sed 's/o/u/g'
+outputs "fuu"
+
+* Substitute '-' for '.' in all occurrences
+echo 1.07.0000 | sed 's/\./-/g'
+outputs "1-07-0000"
+
+* Remove carriage return characters
+** If ^M can be printed:
+sed 's/^M$//'
+** If sed supports hex escape codes:
+sed 's/\x0D$//'
+
+* Replace space with newline
+sed 's/\S\+/\n/g'
+
+Actually replaces each contiguous block of whitespace characters with
+a single newline.
+
+* Replace newline with space
+Don't use sed, use tr.

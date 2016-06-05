@@ -1,0 +1,19 @@
+-*- Mode: Outline -*-
+
+* Batch byte compile all files in a directory.
+emacs -batch -f batch-byte-compile *.el
+* byte compile emacs init files after change.
+Execute M-x byte-recompile-directory and specify the init directory.
+
+* Local variables
+header: see the top of this file.
+
+For source code, put the local variable string into the appropriate
+comment for that language.
+
+Use the syntax <VAR: VALUE;>.  As above, VAR is Mode and VALUE is
+Outline.  this can be used to set multiple variables.
+
+* Insert a newline at the end of replacement text in query-replace
+Type C-q C-j
+

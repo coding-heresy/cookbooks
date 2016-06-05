@@ -1,0 +1,9 @@
+-*- Mode: Outline -*-
+
+* Remove certain directories from results
+** e.g. .svn
+e.g. searching for files like 'makeinclude*'
+find . -not -iwholename '*.svn*' -a -name 'makeinclude*'
+* match multiple name patterns
+e.g. searching for all C++ header files and translation units
+find . -name '*.h' -o -name '*.cpp'

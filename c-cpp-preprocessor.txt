@@ -1,0 +1,30 @@
+-*- Mode: Outline -*-
+
+* Code a variadic macro
+#define BUILD_A_STRING_WITH_STREAM_OPERATORS_AND_CALL_A_FUNCTION_ON_IT(func, ...) \
+   do {                                                                           \
+      ostringstream ss;                                                           \
+      ss << __VA_ARGS__;                                                          \
+      func(ss.str());                                                             \
+   } while (0)
+* Rules for writing macros.
+Lifted from:
+http://www.commonsense4commonpeople.net/2008/11/tips-on-writing-c-macros.html
+** Always wrap macros in a do..while loop.
+#define MYMACRO               \
+do {                          \
+   /*macro definition here*/  \
+} while (0)
+
+** Always surround macro arguments with parentheses in macro body.
+
+* Getting quoted strings in macros.
+Macro argument substitution does not happen in quoted strings but can
+be obtained by using '#':
+
+#define QUOTEME(val) #val
+
+causes
+QUOTEME(foo)
+to expand to "foo"
+

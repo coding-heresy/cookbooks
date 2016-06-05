@@ -1,0 +1,44 @@
+-*- Mode: Outline -*-
+
+* break gdb on exception throw
+catch throw
+break __cxa_throw
+* conditional breakpoint
+set break point (let number be 'n')
+condition n (expr)
+e.g. "condition 2 (5 == foo)" will cause breakpoint 2 to trip when the
+variable foo has the value 5.
+** remove conditional breakpoint
+condition n
+Without a trailing expression, the 'condition' command will clear the
+condition on the target breakpoint, leaving an unconditional
+breakpoint.
+* watch a variable
+** break when written
+*** watch foo
+Will break when 'foo' is written.
+*** watch foo thread n
+Where 'n' is the number of a thread, break only when 'foo' is written
+by thread 'n'.
+*** watch -l foo (AKA watch -location foo)
+Evaluate 'foo', take the address of the result, and watch the memory
+at that address.
+*** watch foo mask m
+Mask the address of a watch point, probably not supported on x86.
+** break when read
+*** rwatch foo
+Will break when 'foo' is read.  Also allows 'thread' and '-l'
+modifiers as per 'watch' above.
+** break when read or written
+*** awatch foo
+Will break when 'foo' is read or written.  Also allows 'thread' and
+'-l' modifiers as per 'watch' above.
+* print STL string
+For variable defined as "string foo;", the gdb command "p foo.c_str()"
+does the expected thing in recent versions of gdb.
+* display STL containers.
+http://www.yolinux.com/TUTORIALS/GDB-Commands.html#STLDEREF
+Helper macros already installed under .gdb directory.
+* stop displaying a variable
+Use the command "undisplay <n>" where n is the number of the item in
+the display list, which will be printed before each display entry.

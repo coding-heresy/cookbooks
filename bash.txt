@@ -1,0 +1,197 @@
+-*- Mode: Outline -*-
+
+* check exit status/return code of a command
+** e.g.
+#!/bin/bash
+# execute command
+command_to_check_return_code_for.sh
+# check return code
+if [ $? -ne 0 ]; then
+   /bin/echo "command_to_check_return_code_for.sh failed with return code $?"
+   exit 1
+   # ... or maybe use: exit $?
+fi
+* array variable
+foo=(bar blub)
+* for loop
+for x in 1 2 3
+do
+  echo $x
+done
+
+** also
+for x in 1 2 3; do
+  echo $x
+done 
+
+** also (single line)
+for x in 1 2 3; do echo $x; done
+
+** iterate over elements of an array
+foo=(bar blub)
+for x in ${foo[@]}; do
+  echo $x
+done
+
+* comparison with integer
+if [ $? -eq 0 ]
+then
+  echo expression evaluated as true
+else
+  echo expression evaluated as false
+fi
+
+also
+
+if [ $? -eq 0 ]; then
+  echo expression evaluated as true
+else
+  echo expression evaluated as false
+fi
+
+* comparison with string
+NOTE: make sure that variables are placed in double quotes.
+if [ "$T1" = "$T2" ]; then
+  echo expression evaluated as true
+else
+  echo expression evaluated as false
+fi
+
+* test for existence in file system
+** test for directory existence
+if [ -d $DIR ]; then
+  echo directory $DIR exists
+fi
+
+** test for file existence
+if [ -f $FNAME ]; then
+  echo file $FNAME exists
+fi
+
+** negate the test result
+if [ ! -f $FNAME]; then
+  echo file $FNAME does not exist
+fi
+
+* functions
+function foo {
+  echo $1 foo
+}
+
+foo bar
+
+Should print "bar foo"
+
+* special variables
+** $?
+Exit status of previous command.
+** $-
+Options with which the shell was invoked.
+** $$
+PID of current process.
+** $!
+PID of previous command executed in the background.
+
+* string concatenation in variable assignment
+VAR=$FOO"_"$BAR
+need to surround the '_' character with quotes to prevent it from
+trying to use the variable $FOO_ instead of the variable $FOO
+
+* handling of command line flags + position args
+while getopts dh OPT; do
+   case ${OPT} in
+      d)
+         /bin/echo "do something..."
+         ;;
+      h)
+         usage
+         ;;
+      *)
+         /bin/echo "Unknown option ${OPT}"
+         ;;
+   esac
+done
+# shift out options that were found
+shift $(($OPTIND -1))
+# remaining position arguments are now in $@
+** resource
+http://www.theunixschool.com/2012/08/getopts-how-to-pass-command-line-options-shell-script-Linux.html
+
+* return a non-numeric value from inside a function
+function myfunc()
+{
+    local  myresult='some value'
+    echo "$myresult"
+}
+
+result=$(myfunc)   # or result=`myfunc`
+echo $result
+** resource
+http://www.linuxjournal.com/content/return-values-bash-functions
+
+* modify an environment variable inside a function
+function myfunc()
+{
+    local  __resultvar=$1
+    local  myresult='some value'
+    eval $__resultvar="'$myresult'"
+}
+
+myfunc result
+echo $result
+** resource
+http://www.linuxjournal.com/content/return-values-bash-functions
+
+* regular expression match
+re="a regex"
+if [[ $A_STRING_TO_MATCH =~ $re ]]; then /bin/echo "matched"; fi
+
+* executing a constructed command line without capturing the result
+** e.g.
+CMD="${CAT_CMD} $1 ${PROCESSING_STEP}"
+eval "${CMD}"
+
+* using a shell variable in a sed command
+Escape the command with double quotes instead of single quotes.
+e.g.
+sed "s/@@VERSION@@/${VERSION}/"
+
+* forcing variables to have a type
+** syntax
+*** typeset
+e.g.
+typeset -i INT_VAR=val
+*** declare
+Like typeset, but restricts the scope of the variable
+e.g.
+foo() {
+  FOO1="bar1"
+  declare FOO2="bar2"
+}
+bar() {
+  echo $FOO1
+  echo $FOO2
+}
+**** result
+above code prints bar1 but not bar2
+Can use "typeset" or "declare" interchangeably
+** properties
+*** read only: -r
+typeset -r READ_ONLY_VAR=val
+**** result
+attempting to modify READ_ONLY_VAR fails with an error message
+*** exported: -x
+typeset -x EXPORTED_VAR=val
+**** result
+same as "export EXPORTED_VAR=val"?
+EXPORTED_VAR is now visible in child processes (but not parent
+processes)
+** types
+*** integer: -i
+typeset -i INT_VAR=val
+**** result
+INT_VAR can now be used in integer expressions
+*** array: -a
+typeset -a ARRAY_VAR=(val1 val2 val3)
+*** function: -f
+typeset -f FUNCTION_VAR
