@@ -120,7 +120,7 @@ while (eql.second != itr) {
    mulmap.erase(sacrificial);
 }
 * C++11/14
-** Use unique_ptr as a data member
+** Use unique_ptr as a data member (probably should use scoped_ptr instead)
 class Foo
 {
 public:
@@ -183,6 +183,53 @@ int main(const int argc, const char *argv[])
    Helped<Bar> helpedByBar; // compile fails in the static_assert of struct Helped
    helpedByBar.fn();
 }
+** lambda
+*** example from "Effective Modern C++"
+std::find_if(container.begin(), container.end(),
+             [](int val) { return 0 < val && val < 10; });
+*** example of default by-reference capture
+double divisor = computeDivisor(calc1, calc2);
+// In the lambda below, the value of divisor is a reference to the
+// local variable divisor.
+std::find_if(container.begin(), container.end(),
+             [&](double value) { return (value % divisor) == 0; }
+*** example of explicit by-reference capture
+double divisor = computeDivisor(calc1, calc2);
+// In the lambda below, the value of divisor is a reference to the
+// local variable divisor.
+std::find_if(container.begin(), container.end(),
+             [&divisor](double value) { return (value % divisor) == 0; }
+*** example of default by-value capture
+double divisor = computeDivisor(calc1, calc2);
+// In the lambda below, the value of divisor is a copy of the
+// local variable divisor.
+std::find_if(container.begin(), container.end(),
+             [=](double value) { return (value % divisor) == 0; }
+*** example of explict by-value capture
+double divisor = computeDivisor(calc1, calc2);
+// In the lambda below, the value of divisor is a copy of the
+// local variable divisor.
+std::find_if(container.begin(), container.end(),
+             [divisor](double value) { return (value % divisor) == 0; }
+** alias declarations
+*** typedef std::unique_ptr<std::unordered_map<std::string, std::string> > UPtrMapSS;
+old and busted
+*** using UPtrMapSS = std::unique_ptr<std::unordered_map<std::string, std::string>>;
+new hotness
+** enum class
+*** e.g.
+enum class THEO {
+  PRICE = 0,
+  DELTA = 1,
+  GAMMA = 2,
+  VEGA = 3,
+  THETA = 4,
+  RHO = 5
+};
+** declaring that a function throws no exceptions
+use 'noexcept' keyword in signature
+*** e.g.
+void foo(int arg) noexcept;
 * Boost
 ** Log library dependencies
 -lboost_log -lboost_system -lboost_thread -lpthread -lrt
@@ -273,3 +320,77 @@ e.g. sorting arrays of pointers: (C++11)
   sort(ipVec.begin(), ipVec.end(), boost::less_pointees_t<int*>());
 * types capable of holding pointer values for display/print
 uintptr_t
+* tricks and hacks
+** force linking of an object file
+Declare a volatile int variable and initialize it to 0.
+*** e.g. from clang-tidy LLVMTidyModule.cpp
+volatile int LLVMModuleAnchorSource = 0;
+* Catch testing framework
+** Tutorial
+#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
+#include "catch.hpp"
+
+unsigned int Factorial( unsigned int number ) {
+    return number <= 1 ? number : Factorial(number-1)*number;
+}
+
+TEST_CASE( "Factorials are computed", "[factorial]" ) {
+    REQUIRE( Factorial(1) == 1 );
+    REQUIRE( Factorial(2) == 2 );
+    REQUIRE( Factorial(3) == 6 );
+    REQUIRE( Factorial(10) == 3628800 );
+}
+*** There are also the following testing macros
+**** CHECK
+Like REQUIRE, but doesn't halt execution
+**** REQUIRE_FALSE
+Like REQUIRE, but polarity is reversed
+**** CHECK_FALSE
+Like CHECK, but polarity is reversed
+**** REQUIRE_THROWS
+Does the expected thing
+**** CHECK_THROWS
+Does the expected thing
+**** REQUIRE_NOTHROW
+Does the expected thing
+**** CHECK_NOTHROW
+Does the expected thing
+**** REQUIRE_THROWS_AS
+Second argument is the required exception type, does the expected
+thing
+**** CHECK_THROWS_AS
+Second argument is the required exception type, does the expected thing
+*** Here are extra testing features
+**** Approx
+Function that allows approximate matching of floating point values.
+e.g.
+REQUIRE(performComputation() == Approx(2.1));
+***** Epsilon
+Allows the epsilon value to be set for Approx.
+e.g.
+REQUIRE(22/7 == Approx(3.141).epsilon(0.01));
+*** There are logging macros
+**** INFO
+Does not print if the test is successful.
+**** WARN
+Always prints, but doesn't force the test to fail.
+**** FAIL
+Prints and forces the test to fail.
+**** CAPTURE
+Prints the value of its argument variable.
+*** There is a SECTION macro
+Initialization code from the beginning of a TEST_CASE macro is
+repeated before code in each subordinate SECTION is run.
+*** Using a fixture
+struct Fixture
+{
+  void doSomething() { /* ... */ }
+  static void doSomethingElse() { /* ... */ }
+};
+
+TEST_CASE_METHOD(Fixture, "tests needing fixture", "[fixture]")
+{
+  // Test case code occurs in a uniquely named member function of a
+  // subclass of Fixture, and so has access to public and protected
+  // data members and member functions of Fixture
+}
