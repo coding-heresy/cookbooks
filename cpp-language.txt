@@ -394,3 +394,6 @@ TEST_CASE_METHOD(Fixture, "tests needing fixture", "[fixture]")
   // subclass of Fixture, and so has access to public and protected
   // data members and member functions of Fixture
 }
+* get the mangled name of a type
+Foo foo;
+typeid(foo).name()
