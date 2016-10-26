@@ -4,6 +4,9 @@
 ** batch byte compile all files in a directory.
 emacs -batch -f batch-byte-compile *.el
 
+* byte compile emacs init files after change.
+Execute M-x byte-recompile-directory and specify the init directory.
+
 ** byte compile emacs init files after change.
 M-x byte-recompile-directory
 *** specify the init directory
