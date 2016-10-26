@@ -4,15 +4,16 @@
 catch throw
 break __cxa_throw
 * conditional breakpoint
-set break point (let number be 'n')
-condition n (expr)
+first, set a break point (let the number assigned to it by gdb be 'n')
+** set conditional breakpoint
+*** condition n (expr)
 e.g. "condition 2 (5 == foo)" will cause breakpoint 2 to trip when the
 variable foo has the value 5.
 ** remove conditional breakpoint
-condition n
-Without a trailing expression, the 'condition' command will clear the
+*** condition n
+without a trailing expression, the 'condition' command will clear the
 condition on the target breakpoint, leaving an unconditional
-breakpoint.
+breakpoint
 * watch a variable
 ** break when written
 *** watch foo

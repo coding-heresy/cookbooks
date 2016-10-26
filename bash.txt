@@ -117,6 +117,11 @@ shift $(($OPTIND -1))
 ** resource
 http://www.theunixschool.com/2012/08/getopts-how-to-pass-command-line-options-shell-script-Linux.html
 
+* shifting command line arguments
+use the 'shift' builtin
+** resource
+http://tldp.org/LDP/Bash-Beginners-Guide/html/sect_09_07.html
+
 * return a non-numeric value from inside a function
 function myfunc()
 {
@@ -195,3 +200,41 @@ INT_VAR can now be used in integer expressions
 typeset -a ARRAY_VAR=(val1 val2 val3)
 *** function: -f
 typeset -f FUNCTION_VAR
+* conditionally set environment variable
+** e.g.
+${SOMETHING='value'}
+*** NOTE: this then attempts to execute 'value'
+** use the : operator to avoid execution
+*** e.g.
+: ${SOMETHING='value'}
+**** throws away 'value' instead of trying to execute it
+* exit from a sourced script without terminating the surrounding shell
+/bin/kill -INT $$
+** e.g.
+function usage {
+   /bin/echo "usage: $0 <args...>"
+   /bin/kill -INT $$
+}
+* detect if a script is being sourced
+[[ $_ != $0 ]] && echo "Script is being sourced" || echo "Script is a subshell"
+* test operators
+** [ operator
+*** e.g. if [ "`id -nu`" = "$someuser" ]; then
+Less safe since variable expansions need to be quoted because the
+operator splits the argument and expands filename globs if the
+variable references are not quoted.
+*** has different features
+**** old school conditional evaluation
+-a vs &&
+-o vs ||
+**** may be missing > and < operators
+**** does not have regular expression matching operator =~
+**** operators = and == do not do simple pattern matching (see below)
+** [[ operator
+*** e.g. if [[ -e $b ]]; then
+More safe since variable references do not need to be quoted
+**** new school operators (see above)
+**** operator = and == support simple pattern matching
+[[ $name = a* ]] || echo "name does not start with an 'a': $name"
+* change file owner/group
+chown [new owner][:<new group>] <file path>

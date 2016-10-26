@@ -48,3 +48,5 @@ open.
 NOTE: template must be a character array, not a constant, since it
 will be overwritten by the function.
 
+* glibc
+See the entry in cpp-language.txt

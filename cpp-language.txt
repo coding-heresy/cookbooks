@@ -1,16 +1,184 @@
 -*- Mode: Outline -*-
 
-* Allocating an array with 'new' operator
+* input/output
+** generic stream I/O
+*** input
+*** output
+**** decimal precision
+***** Set notation to fixed (scientific is alternative).
+cout.setf(ios::fixed,ios::floatfield);
+***** Set number of digits past decimal in fixed and scientific.
+cout.precision(5);
+
+**** generate output with ostream_iterator
+#include <iostream>
+#include <string>
+#include <iterator>
+#include <algorithm>
+#include <vector>
+
+   std::string goingToOutput;
+   std::ostream_iterator<char> coutItr(std::cout, ""); // Replace "" with delimiter if desired
+   std::copy(goingToOutput.begin(), goingToOutput.end(), coutItr);
+
+***** see also ostream_innerator
+Correctly places the delimiter internal to the list.
+
+** file I/O
+*** input
+**** Reading text file data
+#include <fstream>
+...
+ifstream input;
+input.open(fileName.c_str());
+string line;
+if (input.is_open()) {
+  while (!input.eof()) {
+    getline(input, line);
+    ...
+  }
+}
+***** also
+#include <iostream>
+#include <fstream> // include of fstream is required
+
+   ifstream input(argv[0], ifstream::in);
+   string raw;
+   if (input.good()) {
+      getline(input, raw);
+   }
+   while (input.good()) {
+      // process string
+      getline(input, raw);
+   }
+
+*** output
+**** Writing text file output
+#include <fstream>
+...
+ofstream output(fileName.c_str(), ofstream::out);
+output << "Hello file output!" << endl;
+output.close();
+
+**** generate a temporary file
+boost::filesystem handles this, see the Boost section.
+
+* stack trace
+** how to generate a stack trace
+*** e.g. from https://www.gnu.org/software/libc/manual/html_node/Backtraces.html
+#include <execinfo.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+/* Obtain a backtrace and print it to stdout. */
+void
+print_trace (void)
+{
+  void *array[10];
+  size_t size;
+  char **strings;
+  size_t i;
+
+  size = backtrace (array, 10);
+  strings = backtrace_symbols (array, size);
+
+  printf ("Obtained %zd stack frames.\n", size);
+
+  for (i = 0; i < size; i++)
+     printf ("%s\n", strings[i]);
+
+  free (strings);
+}
+
+/* A dummy function to make the backtrace more interesting. */
+void
+dummy_function (void)
+{
+  print_trace ();
+}
+
+int
+main (void)
+{
+  dummy_function ();
+  return 0;
+}
+
+** how to demangle a stack trace
+*** e.g. from https://gcc.gnu.org/onlinedocs/libstdc++/manual/ext_demangling.html
+#include <exception>
+#include <iostream>
+#include <cxxabi.h>
+
+struct empty { };
+
+template <typename T, int N>
+  struct bar { };
+
+
+int main()
+{
+  int     status;
+  char   *realname;
+
+  // exception classes not in <stdexcept>, thrown by the implementation
+  // instead of the user
+  std::bad_exception  e;
+  realname = abi::__cxa_demangle(e.what(), 0, 0, &status);
+  std::cout << e.what() << "\t=> " << realname << "\t: " << status << '\n';
+  free(realname);
+
+
+  // typeid
+  bar<empty,17>          u;
+  const std::type_info  &ti = typeid(u);
+
+  realname = abi::__cxa_demangle(ti.name(), 0, 0, &status);
+  std::cout << ti.name() << "\t=> " << realname << "\t: " << status << '\n';
+  free(realname);
+
+  return 0;
+}
+
+*** also as a separate function
+#include <cxxabi.h>
+/**
+ * Demangling code for readable stack traces.
+ */
+std::string
+demangle(const std::string& str)
+{
+   int status = 0;
+   // NOTE: using shared_ptr instead of scoped_ptr here to take advantage of shared_ptr support for custom deleter
+   boost::shared_ptr<char> demangled(abi::__cxa_demangle(str.c_str(), NULL, NULL, &status), free);
+   if (0 == status) {
+      std::string result(demangled.get());
+      return result;
+   }
+   // return a copy of the original string if it cannot be demangled.
+   return str;
+}
+
+* memory management
+** operator new
+*** Allocating an array with 'new' operator
 uint8_t value = new uint8_t [size];
-* Template class.
-** Basic declaration/definition
-template<typename class1, typename class2, ...>
+
+*** "placement new" syntax
+e.g.
+void* rawMem = allocate_some_raw_memory();
+TargetType* tgt = new (rawMem) TargetType();
+
+* templates
+** class template
+*** basic declaration/definition
+template<typename Class1, typename Class2, ...>
 class TClass {
       ...
 };
 
-** Default arguments.
-template<typename class1, typename class2 = DefaultClass, ...>
+*** default arguments.
+template<typename Class1, typename Class2 = DefaultClass, ...>
 class TClassWithDefault
 {
   ...
@@ -20,7 +188,73 @@ NOTE: as with default function parameters, it makes no sense to have a
 non default argument argY after a default argument argX because argX
 would always need to be specified.
 
-* Static constants inside classes
+*** static constant data member initialization
+tempate<typename T>
+struct Foo
+{
+static const double BAR;
+};
+
+template<typename T>
+double Foo<T>::BAR = 3.14159;
+
+*** define static member (data member and member function) of a class template
+**** e.g.
+template<typename T>
+class A
+{
+public:
+   static int x;
+   static int fun();
+};
+
+// static data member
+template<class T>int A<T>::x=10;
+
+// static member function
+template<class T>int A<T>::fun()
+{
+   return 10;
+}
+
+*** specialization
+**** full specialization
+***** e.g. use in metaprogramming
+template<typename T>   // primary template
+struct is_void : std::false_type
+{
+};
+template<>  // explicit specialization for T = void
+struct is_void<void> : std::true_type
+{
+};
+
+**** partial specialization
+***** e.g. curry function style
+template<typename TypeParameter1, typename TypeParameter2>
+class CurryFunctionStyle
+{
+};
+
+// fix the value of TypeParameter1 and allow the value of TypeParameter2 to vary
+template<typename TypeParameter2Renamed>
+class CurryFunctionStyle<InstantiatedTypeArgument1, TypeParameter2Renamed>
+{
+};
+
+***** e.g. type restriction style
+template<typename TypeParameter1, typename TypeParameter2>
+class TypeRestrictionStyle
+{
+};
+
+// restrict the value of TypeParameter1 to be a pointer type
+template<typename TypeParameter1Renamed, typename TypeParameter2Renamed>
+class TypeRestrictionStyle<TypeParameter1Renamed *, TypeParameter2Renamed>
+{
+};
+
+* static constants inside classes
 class Foo
 {
 public:
@@ -39,43 +273,7 @@ private:
   };
 };
 
-* Decimal precision in streams
-** Set notation to fixed (scientific is alternative).
-cout.setf(ios::fixed,ios::floatfield);
-** Set number of digits past decimal in fixed and scientific.
-cout.precision(5);
-* Reading text file data
-#include <fstream>
-...
-ifstream input;
-input.open(fileName.c_str());
-string line;
-if (input.is_open()) {
-  while (!input.eof()) {
-    getline(input, line);
-    ...
-  }
-}
-** also
-#include <iostream>
-#include <fstream> // include of fstream is required
-
-   ifstream input(argv[0], ifstream::in);
-   string raw;
-   if (input.good()) {
-      getline(input, raw);
-   }
-   while (input.good()) {
-      // process string
-      getline(input, raw);
-   }
-* Writing text file output
-#include <fstream>
-...
-ofstream output(fileName.c_str(), ofstream::out);
-output << "Hello file output!" << endl;
-output.close();
-* Declaring friend functions
+* declaring friend functions
 class Foo
 {
   // ...
@@ -89,20 +287,6 @@ bar(const Foo &arg)
   // ...
 }
 
-* generate output with ostream_iterator
-#include <iostream>
-#include <string>
-#include <iterator>
-#include <algorithm>
-#include <vector>
-
-   std::string goingToOutput;
-   std::ostream_iterator<char> coutItr(std::cout, ""); // Replace "" with delimiter if desired
-   std::copy(goingToOutput.begin(), goingToOutput.end(), coutItr);
-** see also ostream_innerator
-Correctly places the delimiter internal to the list.
-* generate a temporary file
-boost::filesystem handles this, see the Boost section.
 * delete entries from a multimap (prior to C++14)
 typedef std::multimap<keytype, valuetype> Multimap;
 typedef std::pair<Multimap::iterator, Multimap::iterator> EqualRange;
@@ -119,8 +303,8 @@ while (eql.second != itr) {
    ++itr;
    mulmap.erase(sacrificial);
 }
-* C++11/14
-** Use unique_ptr as a data member
+* c++11/14
+** use unique_ptr as a data member
 class Foo
 {
 public:
@@ -131,8 +315,9 @@ public:
 
 Foo foo;
 foo.bar.reset(new Bar);
+*** NOTE: could also use boost::scoped_ptr
 
-** Code move constructor and move assignment operator
+** code move constructor and move assignment operator
 *** move constructor
 class MoveConstructable
 {
@@ -163,7 +348,7 @@ public:
 private:
    ValueType* valuePtr_;
 };
-** Use type_traits + static_assert to enforce requirements on template arguments
+** use type_traits + static_assert to enforce requirements on template arguments
 *** e.g.
 #include <type_traits>
 using namespace std;
@@ -183,16 +368,330 @@ int main(const int argc, const char *argv[])
    Helped<Bar> helpedByBar; // compile fails in the static_assert of struct Helped
    helpedByBar.fn();
 }
-* Boost
-** Log library dependencies
+** capture data members of a class in a lambda defined in a member function
+capture the 'this' pointer:
+*** e.g.
+struct Foo
+{
+   int bar;
+   void logIt() {
+      auto f = [this]() { std::cout << "value of bar is [" << bar << "]" << std::endl;
+      f();
+   }
+};
+
+** use move capture in a lambda
+move from an rvalue reference to a captured value inside a lambda
+without excessive copies
+*** e.g.
+std::function<void()>
+makeFunc(Foo&& foo)
+{
+   return [foo{std::move(foo)}]() { /* do some 'foo' stuff */ };
+}
+
+** bind
+***** e.g. bind to some function pointer to adapt from 3 arguments to 2
+auto funcPtr = std::bind(&someFunc, _1, _2, boundArg);
+***** e.g. bind to member function pointer
+auto funcPtr = std::bind(someInstance, &SomeClass::SomeMemberFunc, _1, _2, _3);
+
+** declare a class or member function as "final"
+*** class
+class Foo final
+{
+};
+**** may not create a derived class from Foo
+*** member function
+class Bar : public Foo
+{
+public:
+   virtual foo() final;
+};
+**** may not override Bar::foo
+**** may only be used for a virtual function
+only seems to make sense for a subclass that is overriding a member
+function from a parent class but should not have that function
+overridden again.
+
+** declare default constructors and assignment operators
+class Foo
+{
+public:
+   // default construction
+   Foo() = default;
+   // copy constructor
+   Foo(const Foo&) = default;
+   // copy assignment operator
+   Foo& operator=(const Foo&) = default;
+   // move constructor
+   Foo(Foo&&) = default;
+   // move assignment operator
+   Foo& operator=(Foo&&) = default;
+};
+
+** prevent generation of implicitly defined member functions
+class Foo
+{
+public:
+   // default construction
+   Foo() = delete;
+   // copy constructor
+   Foo(const Foo&) = delete;
+   // copy assignment operator
+   Foo& operator=(const Foo&) = delete;
+   // move constructor
+   Foo(Foo&&) = delete;
+   // move assignment operator
+   Foo& operator=(Foo&&) = delete;
+};
+
+** use std::experimental::optional
+the interface is defined to mimic code that would be written if the
+optional object was replaced by a pointer to the object
+*** return an optional value
+std::experimental::optional<int> convert(const std::string& text)
+{
+  std::stringstream s(text);
+  int i;
+  if ((s >> i) && s.get() == std::char_traits<char>::eof())
+    return i;
+  else
+    return std::experimental::nullopt;
+}
+*** reassign an optional value
+std::experimental::optional<int> convert(const std::string& text)
+{
+  std::experimental::optional<int> ans;
+  std::stringstream s(text);
+  int i;
+  if ((s >> i) && s.get() == std::char_traits<char>::eof())
+    ans = i;
+
+  return ans;
+}
+
+** use scoped enumerations (e.g. "enum class" and "enum struct")
+*** NOTE: "enum class" and "enum struct" are exactly the same
+there are no private members
+*** e.g. declare scoped enum with a specific underlying type
+enum class Bits : uint8_t
+{
+   B1 = 1,
+   B2 = B1 << 1,
+   B3 = B2 << 1,
+   B4 = B3 << 1
+};
+
+** mutex
+*** unique_lock - scoped locking for std::mutex that also allows lock/unlock
+contrast with shared_lock
+**** e.g.
+#include <mutex> // gives std::mutex and std::lock_guard
+using LockGuard = std::unique_lock<std::mutex>;
+void doSomethingWithMultipleCriticalSections() {
+  // ********** start initial critical section
+  static std::mutex mtx;
+  LockGuard guard(mtx);
+  // critical section
+
+  // ********** end initial critical section
+  guard.unlock();
+  // not critical section
+
+  // ********** start second critical section
+  guard.lock();
+  // critical section again
+
+  // ********** end second critical section
+  guard.unlock();
+  // not critical section
+
+  // ********** optional critical section
+  if (guard.try_lock()) {
+    // optional critical section
+    guard.unlock();
+  }
+  // not critical section
+
+  // ********** time-critical critical section
+  auto timeout = calculateLockTimeout(); // chrono::time_point<...>
+  if (guard.try_lock_until(timeout)) {
+    // critical section only executed if the lock can be acquired in time
+    guard.unlock()
+  }
+  // not critical section
+
+  // ********** another time-critical critical section
+  auto waitDuration = calculateLockWaitDuration(); // chrono::duration<...>
+  if (guard.try_lock_for(waitDuration)) {
+    // similar to previous critical section
+    guard.unlock();
+  }
+
+  // ********** handing off the locked object
+  guard.lock();
+  needsToStartWithLockedMutex(guard.release());
+
+  // ********** can no longer lock
+}
+*** lock_guard - scoped locking for std::mutex, no way to unlock
+**** e.g.
+#include<mutex> // gives std::mutex and std::lock_guard
+using LockGuard = std::lock_guard<std::mutex>;
+void doSomethingThreadSafe() {
+  static std::mutex mtx;
+  LockGuard guard(mtx);
+  // critical section until scope exit, no way to unlock
+}
+** shared_mutex (in c++17, otherwise use boost::shared_mutex)
+i.e. reader/writer lock
+*** e.g.
+#include <mutex> // gives std::unique_lock
+#include <shared_mutex> // gives std::shared_mutex and std::shared_lock
+#include <experimental/optional>
+template<typename Container>
+class SharedContainer
+{
+  using SharedLock = std::shared_lock<std::shared_mutex>;
+  using UniqLock = std::unique_lock<std::shared_mutex>;
+public:
+  using key_type = typename Container::key_type;
+  using value_type = typename Container::value_type;
+
+  // use shared (AKA reader) lock
+  // NOTE: const could be violated by write from another thread
+  const std::experimental::optional<value_type> &
+  get(const key_type &) const
+  {
+    SharedLock guard(mtx_);
+    auto entry = contnr_.find(key);
+    if (std::end(contnr_) == entry) {
+      return std::experimental::nullopt;
+    }
+    return *entry;
+  }
+
+  // use unique (AKA exclusive, AKA writer) lock
+  void
+  set(const key_type &key, const value_type &value)
+  {
+    auto insertable make_insertable<Container>(key, value);
+    UniqLock guard(mtx_);
+    contnr_.insert_hint(contnr_.cend(), insertable);
+  }
+
+private:
+  mutable std::shared_mutex mtx_;
+  Container contnr_;
+};
+* boost
+** pointers (smart and otherwise)
+*** thread_specific_ptr
+Wrapper for OS-independent thread-local pointer
+**** include file
+#include <boost/thread/tss.hpp>
+**** initialize
+class Foo { /* ... */ };
+// ...
+static boost::thread_specific_ptr<Foo> fooInstance_g;
+// ...
+Foo *foo = fooInstance_g.get();
+if (nullptr == foo) {
+  foo = new Foo();
+  fooInstance_g.reset(foo);
+}
+foo->doSomething();
+**** reference
+http://www.boost.org/doc/libs/1_59_0/doc/html/thread/thread_local_storage.html
+
+*** scoped_ptr
+scoped_ptr<PointedToType>
+scoped_array<TypeContainedInArray>
+**** include files
+#include <boost/scoped_ptr.hpp>
+#include <boost/scoped_array.hpp>
+**** e.g.
+class MyType;
+
+scoped_ptr<MyType> guard1 = scoped_ptr<MyType>(new MyType());
+scoped_array<MyType> guard2 = scoped_array<MyType>(new MyType[count]);
+
+*** shared_ptr
+**** enable_shared_from_this
+***** returning a shared pointer
+class Foo : public boost::enable_shared_from_this<Foo>
+{
+   boost::shared_ptr<Foo> cloneSharedPtr() { return this->shared_from_this(); }
+};
+***** pitfalls
+****** only call shared_from_this() on an object that is already owned by a shared pointer
+******* e.g do this
+int main()
+{
+    boost::shared_ptr<Foo> fooPtr(new Foo);
+    boost::shared_ptr<Foo> fooPtrClone = fooPtr->cloneSharedPtr();
+}
+******* e.g do not do this
+int main()
+{
+    Foo* fooPtr = new Foo;
+    boost::shared_ptr<Foo> sharedFooPtr = fooPtr->cloneSharedPtr();
+}
+
+*** compare_pointees
+From boost/utility/compare_pointees.hpp
+
+Useful for creating a set of pointers (including smart pointers) to
+objects, e.g.: (C++98)
+  struct Foo { int v; };
+  bool operator<(const Foo& lhs, const Foo& rhs) { return lhs.v < rhs.v; }
+  typedef std::set<Foo*, boost::less_pointees_t<Foo*> > FooSet;
+
+e.g. sorting arrays of pointers: (C++11)
+  vector<int*> ipVec{ new int(3), new int(2), new int(1) };
+  sort(ipVec.begin(), ipVec.end(), boost::less_pointees_t<int*>());
+
+
+** regex
+*** include file
+#include <boost/regex.hpp>
+*** match a regex -> use regex_match or regex_search
+regex_match will only match if the regex matches the entire input
+string, regex_search will match against substrings of the input string
+**** e.g.
+bool validate_card_format(const std::string& s)
+{
+   static const boost::regex e("(\\d{4}[- ]){3}\\d{4}");
+   return regex_match(s, e);
+}
+*** replace strings with a regex -> use regex_replace
+// match any format with the regular expression:
+const boost::regex e("\\A(\\d{3,4})[- ]?(\\d{4})[- ]?(\\d{4})[- ]?(\\d{4})\\z");
+const std::string machine_format("\\1\\2\\3\\4");
+const std::string human_format("\\1-\\2-\\3-\\4");
+
+std::string machine_readable_card_number(const std::string s)
+{
+   return regex_replace(s, e, machine_format, boost::match_default | boost::format_sed);
+}
+
+std::string human_readable_card_number(const std::string s)
+{
+   return regex_replace(s, e, human_format, boost::match_default | boost::format_sed);
+}
+
+** log library dependencies
 -lboost_log -lboost_system -lboost_thread -lpthread -lrt
 
-** Program options
-*** Include file
+** program options
+*** include file
 #include <boost/program_options.hpp>
-*** Simplify the resolution
+*** linker flags
+-lboost_program_options
+*** simplify the scope resolution
 namespace po = boost::program_options;
-*** Read option values into a variables map
+*** e.g. read option values into a variables map
 po::variables_map options;
 po::options_description desc("options");
 double copiedValue;
@@ -208,11 +707,54 @@ desc.add_options()
   /* --copy or -c is a double value that is automatically copied to a variable */
   ("copy,c", po::value<double>(&copiedValue), "copied option");
 po::store(po::parse_command_line(argc, argv, desc), options)
-*** Print usage when 'help' argument exists.
+**** e.g. positional options
+#include <boost/program_options.hpp>
+// ...
+
+namespace po = boost::program_options;
+// ...
+
+po::options_description desc("Allowed options");
+desc.add_options()
+    ("help,h", "produce help message") // use -h or --help
+    ("input-file", po::value<string>(), "input file") // will actually be positional, but could use --input-file
+    ("compression,c", po::value<int>(), "set compression level") // use -c or --compression
+;
+po::positional_options_description posn;
+posn.add("input-file", 1);
+po::variables_map options;
+// NOTE: constructing an instance of po::command_line_parser and
+// passing it to po::store() instead of calling
+// po::parse_command_line()
+// as in previous example
+po::store(po::command_line_parser(argc, argv).options(desc).positional(posn).run(), options);
+po::notify(options);
+if (options.count("help")) {
+    cout << desc << "\n";
+    return 1;
+}
+if (options.count("compression")) {
+    cout << "Compression level was set to " << options["compression"].as<int>() << ".\n";
+}
+else {
+    cout << "Compression level was not set.\n";
+}
+if (options.count("input-file")) {
+    cout << "Input file was set to " << options["input-file"].as<string>() << ".\n";
+}
+else {
+    cout << "Input file was not set.\n";
+}
+***** source
+https://chuckaknight.wordpress.com/2013/03/24/boost-command-line-argument-processing/
+
+*** e.g. print usage when 'help' argument exists.
 if (options.count("help")) {
    cerr << "Usage: " << argv[0] << desc << endl;
 }
-** Unit test
+**** note use of count() in place of a more complex call to find()
+
+** unit test
 *** check that two values are equal
 BOOST_CHECK_EQUAL(val1, val2);
 *** check that a boolean value is true
@@ -225,7 +767,7 @@ Add the following arguments to the test program:
 **** reference
 http://stackoverflow.com/questions/15943091/boost-unit-tests-with-xunit-plugin-in-jenkins-do-not-work
 
-** Optional
+** optional
 *** Return an optional value
 boost::optional<int> convert(const std::string& text)
 {
@@ -247,7 +789,8 @@ boost::optional<int> convert(const std::string& text)
 
   return ans;
 }
-** Filesystem
+
+** filesystem
 *** Create temporary file
 #include <string>
 #include <boost/filesystem.hpp>
@@ -259,17 +802,254 @@ boost::filesystem::exists(filePath);
 *** Remove (AKA delete) a file
 boost::filesystem::path filePath;
 boost::filesystem::remove(filePath);
-** compare_pointees
-From boost/utility/compare_pointees.hpp
 
-Useful for creating a set of pointers (including smart pointers) to
-objects, e.g.: (C++98)
-  struct Foo { int v; };
-  bool operator<(const Foo& lhs, const Foo& rhs) { return lhs.v < rhs.v; }
-  typedef std::set<Foo*, boost::less_pointees_t<Foo*> > FooSet;
+** string algorithms
+*** iteration over split string: spliterator!!!!
+#include <boost/algorithm/string.hpp>
 
-e.g. sorting arrays of pointers: (C++11)
-  vector<int*> ipVec{ new int(3), new int(2), new int(1) };
-  sort(ipVec.begin(), ipVec.end(), boost::less_pointees_t<int*>());
-* types capable of holding pointer values for display/print
+//...
+
+string delimiter(",");
+using SplIterator = boost::split_iterator<std::string::iterator>;
+string toSplit;
+// put something in toSplit
+for (SplIterator itr = boost::make_split_iterator(opts, boost::first_finder(delimiter)); itr != SplIterator; ++itr)
+{
+  string val = boost::copy_range<string>(*itr);
+  // do something with val
+}
+**** for case insensitivity in the delimiter
+boost::first_finder(delimiter, boost::is_iequal())
+
+** multi-threading support
+*** NOTE: see also thread_specific_ptr under the "pointers (smart and otherwise)" section
+*** thread interface
+**** include file
+boost/thread/thread.hpp
+**** link flag
+-lboost_thread
+**** create thread
+struct Executor
+{
+   void operator()() { /* ... */ }
+};
+// ...
+Executor exe;
+// NOTE: use of boost::ref prevents copying of exe
+boost::thread thr(boost::ref(exe));
+**** join thread
+***** unconditional
+boost::thread someThread(someThreadFunctor);
+// do other stuff here while someThread is working
+someThread.join();
+***** unconditional RAII
+void func() {
+  boost::thread someThread(someThreadFunctor);
+  boost::thread_joiner joinGuard(someThread);
+  // do other stuff here while someThread is working
+  // joinGuard destructor will automatically call join() on someThread
+}
+***** try to join for a time duration, then give up
+boost::thread someThread(someThreadFunctor);
+// do other stuff here while someThread is working, then wait for at
+// most 10 more seconds
+if (someThread.try_join_for(boost::chrono::seconds(10))) {
+  // joined successfully
+}
+else {
+  // unable to join after 10 seconds
+}
+***** try to join until a time point, then give up
+boost::thread someThread(someThreadFunctor);
+TimePointTypedef joinTime = boost::chrono::steady_clock::now() + boost::chrono::seconds(10);
+// do other stuff here while someThread is working, then join when the
+// previously calculated time point is reached
+if (someThread.try_join_until(joinTime)) {
+  // joined successfully
+}
+else {
+  // unable to join after 10 seconds
+}
+
+*** synchronization
+**** mutex
+***** unique_lock vs lock_guard
+unique_lock can be explicitly unlocked, lock_guard is strictly
+controlled by the lifetime of the enclosing scope
+
+**** condition variable
+***** e.g. wait on condition
+boost::mutex mtx;
+boost::condition_variable cnd;
+// ...
+{
+   boost::unique_lock<boost::mutex> lock(mtx);
+   cnd.wait(lock);
+}
+***** e.g. signal/notify
+boost::mutex mtx;
+boost::condition_variable cnd;
+// ...
+{
+   boost::lock_guard<boost::mutex> lock(mtx);
+   cnd.notify_one();
+}
+
+*** atomic
+**** include file
+boost/atomic.hpp
+* pointers and references
+** types capable of holding pointer values for display/print
 uintptr_t
+** function pointer syntax
+*** regular declaration
+<return type> (*<function pointer variable name>(<arg 1 type> ...);
+**** e.g.
+void (*func1)();
+int (*func2)(int, int);
+*** typedef
+typedef <return type> (*<function pointer type>)(<arg 1 type> ...);
+**** e.g.
+typedef void (*Function1Type)();
+typedef int (*Function2Type)(int, int);
+// ...
+Function1Type func1 = &SomeMatchingFunctionPointer;
+Function2Type func2 = &SomeOtherMatchingFunctionPointer;
+
+** how to store a reference in a container
+use boost::reference_wrapper
+*** e.g.
+#include <vector>
+#include <boost/ref.hpp>
+
+using std::vector<boost::reference_wrapper<Foo>> FooVec;
+FooVec fooVec;
+Foo foo;
+fooVec.push_back(foo); // stores a reference
+*** relevant compiler error
+**** gcc
+"forming pointer to reference type"
+** basic skeleton of a pointer-like class
+class PointerWrap
+{
+public:
+  PointerWrap(WrappedPointerType* ptr) : ptr_(ptr) {}
+
+  WrappedPointerType& operator*() { return *ptr_; }
+
+  WrappedPointerType* operator->() { return ptr_; }
+
+private:
+  WrapperPointerType* ptr_;
+};
+* type traits and type info
+** print the name of the type of a variable
+*** e.g.
+#include <typeinfo>
+
+// …
+std::cout << typeid(a).name() << '\n';
+* alias for fixed length array type
+** with "typedef"
+typedef ElementType ArrayType[size];
+** with "using"
+using ArrayType = ElementType[size];
+* how to process variadic function arguments
+** e.g. args are character pointers
+#include <cstdarg>
+void foo(int FirstArgType, ...)
+{
+  va_list args;
+  va_start(args, bar);  // must use last argument before elipsis
+  for (char *arg = va_arg(args, char *); arg; arg = va_arg(args, char *)) {
+    // do something with arg
+  }
+  va_end(args);
+}
+*** call as (note the required nullptr at the end to terminate the argument scanning):
+foo(20010911, "bar", "blub", nullptr);
+** termination
+can contain termination information in the earlier arguments, such as
+having a count of the remaining arguments as the last non-variadic
+argument.  printf/scanf/etc solve this problem by the format string
+containing the specifiers for all of the required arguments.
+* how to forward a variadic function call
+cannot be forwarded directly, requires a target function that takes a
+va_list argument.
+** e.g.
+bool fooV(int lastNamedArg, va_list args);
+// ...
+bool
+forwardToFooV(int lastNamedArg, ...)
+{
+   va_list args;
+   va_start(args, lastNamedArg);
+   const bool result = fooV(lastNamedArg, args);
+   va_end(args);
+   return result;
+}
+** reference
+http://c-faq.com/varargs/handoff.html
+* how to populate a map or set with std::copy
+** e.g. set
+vector<int> iVec;
+// populate iVec
+set<int> iSet;
+copy(begin(iVec), end(iVec), std::inserter(iSet, end(iSet)));
+NOTE: in some sense, iSet.end() is extraneous, but this maintains the
+common interface for all containers
+** e.g. map (NOTE: use std::transform instead of std::copy)
+vector<int> keys;
+vector<int> values;
+// populate keys and values
+using IntIntMap = map<int, int>;
+IntIntMap iMap;
+class Binder
+{
+  IntIntMap::value_type operator()(int key, int value) { return IntIntMap::value_type(key, value); }
+};
+transform(begin(keys), end(keys), begin(values), Binder(), inserter(iMap, end(iMap)));
+* glibc
+** useful environment variables
+*** LIBC_FATAL_STDERR_
+set to non-empty to cause glibc fatal errors to be directed to stderr
+instead of tty
+*** MALLOC_CHECK_
+set what to do when corrupt pointer is detected with malloc debugging:
+  0: do nothing
+  1: print an error message (default)
+  2: call abort().
+*** TERM
+this specifies the kind of terminal that is receiving program output.
+*** debug settings
+**** MALLOC_TRACE
+set malloc trace output file / enable mtrace() use, for example:
+  1. Add call to mtrace() to start of main()
+  2. Recompile & link
+  3. Execute: MALLOC_TRACE=heap.log ./myprog
+  4. Execute: mtrace myprog heap.log -> list of memory leaks
+***** 'mtrace' is a Perl script coming with glibc.
+for more information, see 'info libc "Memory Allocation" "Allocation
+Debugging"'.
+**** MEMUSAGE_OUTPUT
+name of the output file to stream memory usage data to.
+***** requires LD_PRELOAD=lib/libmemusage.so
+**** MEMUSAGE_TRACE_MMAP
+if set, all mmap functions details are traced.
+***** requires LD_PRELOAD=lib/libmemusage.so
+*** shared object library loading
+**** LD_DEBUG
+output verbose debugging information about the dynamic linker. If set
+to 'all' prints all debugging information it has, if set to 'help'
+prints a help message
+***** LD_DEBUG_PATH
+filename for LD_DEBUG output (otherwise it goes to stdout).
+**** LD_LIBRARY_PATH
+A colon-separated list of directories in which to search for ELF
+libraries at execution-time.
+**** LD_PRELOAD
+A whitespace-separated list of additional, user-specified, ELF shared
+libraries to be loaded before all others. This can be used to
+selectively override functions in other shared libraries. For
+setuid/setgid ELF binaries, only libraries in the standard search
+directories that are also setuid will be loaded.

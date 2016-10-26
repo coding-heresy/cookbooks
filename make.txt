@@ -32,6 +32,18 @@ cleanobj:
 
 cleandiff
 	rm *.diff
-* Implicit rules
+* implicit rules
 $< the name of the related file that caused the action.
 $* the prefix shared by target and dependent files. 
+* set environment variables that will be passed to commands
+*** e.g. for environment variable 'ENV_VAR'
+export ENV_VER:=value
+* ways to set make variables
+** =
+recursively expand variable references in the source string
+** :=
+simply expand variable references in the source string
+** ?=
+set the value only if it is not already set
+** +=
+append the source value to the current value of the target

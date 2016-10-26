@@ -1,0 +1,10 @@
+-*- Mode: Outline -*-
+
+* digraph
+** e.g.
+digraph {
+        a -> b;
+        b -> c;
+        c -> d;
+        d -> a;
+}

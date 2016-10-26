@@ -33,14 +33,36 @@ http://www.tecmint.com/how-to-mount-and-unmount-an-iso-image-in-linux/
 * devices and file systems
 ** list all block devices
 *** lsblk
-Run as root.
+run as root
+**** -f gives info about filesystems
+**** -a gives info about all block devices
+**** -h gives help
 ** list partitions
 *** fdisk -l
-Run as root.
+run as root
 *** parted -l
-Run as root
+run as root
 *** resource
 http://www.cyberciti.biz/faq/linux-list-disk-partitions-command/
+* video drivers
+** lshw -c video
+lists installed video drivers
+** modinfo <driver name>
+show information about loaded driver, <driver name> can be found in
+the "configuration:" line of the lshw output
+*** modinfo `lshw -c video | awk '/configuration: driver/{print $2}' | cut -d= -f2`
+single command line to get the driver info
+** lspci | grep VGA
+get information about the graphics card hardware
+** find /dev -group video
+check for loaded driver
+** glxinfo | grep -i vendor
+check for X-windows driver
+** cat /var/log/Xorg.<??>.log | grep driver
+find information about drivers from Xorg log file, <??> is some
+number, so need to check /var/log/Xorg.*.log to find the right one
+first
+
 * network test
 ** ping cs.cornell.edu
 Test ability to resolve and contact machines.
@@ -48,7 +70,7 @@ Test ability to resolve and contact machines.
 Test ability to contact machines (this is the IP address of
 cs.cornell.edu), if previous ping test fails and this succeeds, then
 connectivity is available, but there is a problem with DNS.
-* Extracting tracks from ipod and converting to mp3
+* extracting tracks from ipod and converting to mp3
 ** gtkpod
 1) Select tracks
 2) File-> Export Tracks From Database -> Selected Tracks
@@ -56,6 +78,41 @@ Saves tracks as m4a.
 ** lame
 Command line:
 lame <file>.m4a <file>.mp3
-* Listing all block devices.
-Useful for finding partitions on a drive.
-** lsblk
+* encrypt passwords
+echo <password to encrypt> | openssl passwd -1 -stdin
+NOTE: password should be enclosed in quotes
+** e.g.
+echo "P4sSw0rD" | openssl passwd -1 -stdin
+** source
+http://serverfault.com/questions/367559/how-to-add-a-user-without-knowing-the-encrypted-form-of-the-password
+* wipe out MBR (master boot record) for a bootable drive
+dd if=/dev/zero of=<device file in /dev> bs=512 count=1
+** e.g. for device /dev/sda
+dd if=/dev/zero of=/dev/sda bs=512 count=1
+** source
+https://scottlinux.com/2010/06/22/wipe-partition-table-from-a-drive/
+* using an http proxy
+** for wget
+*** environment variable
+export http_proxy=<proxy server>
+export https_proxy=<proxy server>
+<run wget command>
+*** command line
+Add "-e use_proxy=yes" and "-e http_proxy=<hostname or IP>:<port>"
+and/or "-e https_proxy=<hostname or IP>:<port>" to the command line
+*** .wgetrc
+Create a .wgetrc in home area and add the following lines:
+use_proxy=yes
+http_proxy=<hostname or IP>:<port>
+* renew DHCP lease
+sudo dhclient -v -r
+* use rsync to copy files on the machine
+rsync -avzh <source directory> <target directory>
+** e.g. rsync -avzh /build/share/valgrind valgrind
+makes a copy of /build/share/valgrind in the valgrind subdirectory of
+the current directory.
+** argument description
+-a - archive mode: copies recursively, preserves symbolic links, etc
+-v - verbose
+-z - compress file data
+-h - human readable output

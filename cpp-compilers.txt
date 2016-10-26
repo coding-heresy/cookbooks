@@ -1,31 +1,20 @@
 -*- Mode: Outline -*-
 
-* both gcc/g++ and clang/clang++
-** statically link libstd++/libstdgcc
-use the compiler options -static-libstdc++ and -static-libgcc
-WARNING: do not mix this code with dynamically loaded C++ code!
-(unless you really, really know what you are doing)
-*** reference
-http://www.trilithium.com/johan/2005/06/static-libstdc/
-
 * gcc/g++
-** Forcing static linking with later return to dynamic.
-*** E.g. linking libFoo.a
-gcc ... -Wl -Bstatic -lFoo -Wl -Bdynamic ...
-** Get info on builtin include search dirs and predefined definitions
-*** C
+** get info on builtin include search dirs and predefined definitions
+*** e.g. c language
 $ touch empty.c
 $ gcc -v -dD -E empty.c
-*** C++
+*** e.g. c++ language
 $ touch empty.cpp
 $ g++ -v -dD -E empty.cpp
-** Declare function attributes
+** declare function attributes
 Declare the attribute between the return value and the name
 *** e.g. function that does not return
 void __attribute__((noreturn)) dieFool() { /* fools die here */ }
 *** e.g. function that is not always used
 void  __attribute__((unused)) dbgDump(const SomeType&) { /* dump some debug data here */ }
-*** How *NOT* to declare function attributes
+*** how *NOT* to declare function attributes
 DO NOT Need to declare the function with the attribute as suffix before
 defining it.
 **** e.g. function that does not return
@@ -37,10 +26,20 @@ void dieFool(const char* msg) { /* do something with msg and then call exit */ }
 **** e.g. function that is not always used
 void dbgDump(const SomeType&) __attribute__((unused));
 void dbgDump(const SomeType& someValue) { /* dump debug info for someValue */ }
-** how to run from a directory other than the configured directory
-http://www.informit.com/articles/article.aspx?p=101169&seqNum=2
-** how to force the definition of a preprocessor macro from the compiler command line
+** force the definition of a preprocessor macro from the compiler command line
 gcc ...  -DNAME_OF_MACRO_TO_DEFINE=<value> ...
+** statically link libstd++/libstdgcc
+use the compiler options -static-libstdc++ and -static-libgcc
+WARNING: do not mix this code with dynamically loaded C++ code!
+(unless you really, really know what you are doing)
+*** reference
+http://www.trilithium.com/johan/2005/06/static-libstdc/
+** run from a directory other than the configured directory
+http://www.informit.com/articles/article.aspx?p=101169&seqNum=2
+** how to set rpath linker flags
+-Wl,-rpath <rpath>
+i.e. for resulting compiled code, add <rpath> to the list of paths to
+check for shared object libraries.
 
 * clang/clang++
 ** dump AST
@@ -50,28 +49,28 @@ clang -Xclang -ast-dump -fsyntax-only ast_test.cpp
 *** adding a new module of checks for clang-tidy
 All examples assume module in directory "new_module" with name
 "NewModule" and check name "NewCheck".
-**** Create a directory for the new module
+**** create a directory for the new module
 ***** location
 <llvm base directory>/tools/clang/tools/extra/clang-tidy/
-**** Add the new directory as a subdirectory directive in clang-tidy main CMakeLists.txt
+**** add the new directory as a subdirectory directive in clang-tidy main CMakeLists.txt
 ***** location
 <llvm base directory>/tools/clang/tools/extra/clang-tidy/CMakeLists.txt
 ***** e.g. for module in directory "new_module"
 add_subdirectory(new_module)
-**** Add new ClangTidyModule subclass in module directory
+**** add new ClangTidyModule subclass in module directory
 e.g. NewModuleTidyModule.cpp
 Rip from some existing module and modify.
-**** Add new CMakeLists.txt in module directory
+**** add new CMakeLists.txt in module directory
 Rip from some existing module and modify.
 ***** NOTE
 Call to add_clang_library should have a name specific to the new
 module (e.g. clangTidyNewModule), this will be the library name.
-**** Add new library to clang-tidy target_link_libraries
+**** add new library to clang-tidy target_link_libraries
 ***** location
 <llvm base directory>/tools/clang/tools/extra/clang-tidy/tool/CMakeLists.txt
 ***** library name
 Same as the name used for add_clang_library in the previous step.
-**** Add linker anchor to ClangTidyMain.cpp
+**** add linker anchor to ClangTidyMain.cpp
 Add after other similar declarations right before "namespace tidy" is
 closed.
 ***** location
@@ -84,11 +83,13 @@ All examples assume module in directory "new_module" with name
 ***** arguments are: <module name> <check name>
 add_new_check.py new_module NewCheck
 ***** results
-****** Adds new registration to the module's addCheckFactories member function.
-****** Adds new .h and .cpp file inside the module directory
+****** adds new registration to the module's addCheckFactories member function.
+****** adds new .h and .cpp file inside the module directory
 Check name has the string "Check" appended to the file names and the
 class name.
-****** Adds a new entry in the add_clang_library command of the module's CMakeLists.txt
+****** adds a new entry in the add_clang_library command of the module's CMakeLists.txt
 **** review capitalization of added elements
 capitalization does not necessarily agree with the value
 provided to add_new_check.py so this should be reviewed.
+** statically link libstd++/libstdgcc
+see the notes for gcc/g++

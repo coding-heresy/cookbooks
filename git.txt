@@ -1,22 +1,24 @@
 -*- Mode: Outline -*-
 
-* Ways to check things out
-** Check out release tag
-Clone repository with git clone, change to the repository directory,
+* ways to check things out
+** check out release tag
+clone repository with git clone, change to the repository directory,
 list the available tags with:
    git tag -l
 then, for some tag <tag>, checkout the tag with:
    git checkout tags/<tag>
-** Check out branch from remote
+** check out branch from remote
 NOTE: this is for git versions >= 1.6.6
 *** fetch all branches
 git fetch
+*** fetch and merge
+git pull
 *** view available branches
 git branch -v -a
 *** check out the branch
 e.g. for a branch named "test_branch":
 git checkout test_branch
-* File and directory operations
+* file and directory operations
 ** Delete a file
 git rm <filename>
 git commit -m '<commit message>' <filename>
@@ -24,6 +26,8 @@ git commit -m '<commit message>' <filename>
 e.g.
 mkdir src
 git mv hello.cpp src
-* Pushing
+* pushing
 ** Push commits to remote master (commonly used for github)
 git push origin master
+* amend the most recent commit message
+git commit --amend -m "New commit message"

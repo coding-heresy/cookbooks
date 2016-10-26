@@ -1,19 +1,78 @@
 -*- Mode: Outline -*-
 
-* Batch byte compile all files in a directory.
+* byte compiling
+** batch byte compile all files in a directory.
 emacs -batch -f batch-byte-compile *.el
-* byte compile emacs init files after change.
-Execute M-x byte-recompile-directory and specify the init directory.
 
-* Local variables
-header: see the top of this file.
+** byte compile emacs init files after change.
+M-x byte-recompile-directory
+*** specify the init directory
 
-For source code, put the local variable string into the appropriate
-comment for that language.
+* local variables
+** in headers
+see the top of this file.
+
+*** source code
+Put the local variable string into the appropriate comment for that
+language.
 
 Use the syntax <VAR: VALUE;>.  As above, VAR is Mode and VALUE is
 Outline.  this can be used to set multiple variables.
 
-* Insert a newline at the end of replacement text in query-replace
+*** set per-directory local variables
+**** create a .dir-locals.el file in the directory.
+**** within .dir-locals.el, create a list that maps major modes to association lists
+NOTE: nil is a special case which applies the variables to all modes
+***** e.g.
+((nil . ((indent-tabs-mode . t)
+         (fill-column . 80)))
+ (c-mode . ((c-file-style . "BSD")
+            (subdirs . nil)))
+ ("src/imported"
+  . ((nil . ((change-log-default-name
+              . "ChangeLog.local"))))))
+
+* package management
+** list packages
+M-x list-packages
+** install package
+list packages then position the cursor on a package and press 'enter'
+to get more info; if this is the correct package
+
+* flycheck
+** show flycheck error messages in detail
+M-x flycheck-list-errors
+
+** info on flycheck directory local variables
+http://www.flycheck.org/en/latest/languages.html
+
+* misc
+** obscure key chords
+** insert a newline at the end of replacement text in query-replace
 Type C-q C-j
 
+** save all buffers
+C-x s
+
+** set the version of gdb run by gud-gdb
+(defvar gud-gdb-command-name "/build/share/gdb/7.8/bin/gdb")
+(setq gud-gdb-command-name "/build/share/gdb/7.8/bin/gdb --fullname")
+
+** using back refs in regexp replacement
+*** \& stands for the entire match being replaced
+**** e.g. M-x replace-regexp RET c[ad]+r RET \&-safe RET
+replaces (for example) ‘cadr’ with ‘cadr-safe’ and ‘cddr’ with
+‘cddr-safe’.
+*** \d stands for back ref to a group in the matched regex (where d is a digit)
+**** e.g. M-x replace-regexp RET \(c[ad]+r\)-safe RET \1 RET
+replaces (for example) 'cddr-safe' with 'cddr' and 'cadr-safe' with
+'cadr'.
+*** \# stands for incrementing backref
+the backref number gets increment by 1 whenever a \# is encountered in
+the replacement string
+*** \? allows the replacement to be entered manually
+*** \, allows the use of elisp to calculate the replacement string
+**** e.g. M-x replace-regexp RET \(x\)\|y RET \,(if \1 "y" "x") RET
+exchanges 'x' and 'y' ?!?!
+**** backrefs can be referenced in the elisp fragment
+**** the elisp 'format' function can be very useful
