@@ -619,16 +619,6 @@ std::find_if(container.begin(), container.end(),
 old and busted
 *** using UPtrMapSS = std::unique_ptr<std::unordered_map<std::string, std::string>>;
 new hotness
-** enum class
-*** e.g.
-enum class THEO {
-  PRICE = 0,
-  DELTA = 1,
-  GAMMA = 2,
-  VEGA = 3,
-  THETA = 4,
-  RHO = 5
-};
 ** declaring that a function throws no exceptions
 use 'noexcept' keyword in signature
 *** e.g.
@@ -810,6 +800,11 @@ BOOST_CHECK_EQUAL(val1, val2);
 BOOST_CHECK(boolVal);
 *** check that a function call throws a specific type of exception
 BOOST_CHECK_THROW(call(), ExceptionType);
+*** show all log messages
+**** command line argument
+--log_level=all
+**** environment variable
+BOOST_TEST_LOG_LEVEL=all
 *** get XML output for use in Jenkins
 Add the following arguments to the test program:
   --report_level=detailed --report_format=xml
@@ -947,6 +942,113 @@ boost::condition_variable cnd;
 *** atomic
 **** include file
 boost/atomic.hpp
+** iterators
+*** counting iterator
+adds operator* to any type that supports pre-increment to allow it to
+be used in containers and algos
+**** include file
+#include <boost/iterator/counting_iterator.hpp>
+**** e.g. fill vector with MAX integers
+using IntCounter = boost::counting_iterator<int>;
+using InvVec = std::vector<int>;
+InvVec numbers;
+std::copy(IntCounter(0), IntCounter(MAX), std::back_inserter(numbers));
+*** function input iterator (AKA generator)
+calls a function to produce a value each time the iterator is
+incremented and stores the value internally (to support access via
+operator* and operator->) until the next increment.
+**** include file
+#include <boost/iterator/function_input_iterator.hpp>
+**** e.g. fill vector with 10 random numbers
+struct RandGenerator
+{
+   using result_type = int;
+   RandGenerator() { srand(time(0)); } // seed
+   result_type operator()() const { return rand(); }
+};
+
+// ...
+
+RandGenerator randoms;
+std::vector<int> numbers;
+std::copy(boost::make_function_input_iterator(randoms, 0),
+          boost::make_function_input_iterator(randoms, 10),
+          std::back_inserter(numbers));
+*** function output iterator
+output iterator that calls a unary function with the value
+**** include file
+#include <boost/iterator/function_output_iterator.hpp>
+**** e.g. appending a vector of strings
+struct string_appender
+{
+   string_appender(std::string &str) : str_(str)
+   void operator()(const std::string &str) const { str_ += str; }
+private:
+   std::string &str_;
+};
+
+// ...
+
+std::vector<std::string> strings{ "hello", " ", "world", "!" };
+std::string output;
+std::copy(std::begin(strings), std::end(strings),
+          boost::make_function_output_iterator(string_appender(output)));
+std::cout << output << std::endl;
+*** filter iterator
+adapt an underlying iterator to only output values that pass a filter.
+**** include file
+#include <boost/iterator/filter_iterator.hpp>
+**** e.g. filter positive numbers from a vector
+template<typename NumberType>
+struct is_positive
+{
+   bool operator()(NumberType val) { return (0 < x); }
+};
+
+// ...
+
+using IntVec = std::vector<int>;
+using Filter = boost::filter_iterator<is_positive, IntVec::const_iterator>;
+IntVec numbers{ 0, -1, 4, -3, 5, 8, -2 };
+Filter positives(numbers);
+InvVec positiveNumbers;
+std::copy(std::begin(positives), std::end(positives),
+std::back_inserter(positiveNumbers));
+*** iterator facade
+simplifies the implementation of a new iterator type by requiring the
+implementation of only a few core behaviors.
+**** include file
+#include <boost/iterator/iterator_facade.hpp>
+**** e.g.
+template<typename DataType
+struct node_type
+{
+   using value_type = DataType;
+   node_type() : next_(nullptr) {}
+   DataType data_;
+   node_type *next_;
+};
+
+template<typename DataType>
+class node_iterator
+   : public boost::iterator_facade<node_iterator<DataType>, // CRTP
+                                   DataType,
+                                   boost::forward_traversal_tag>
+{
+public:
+   using inner_type = node<DataType>;
+   node_iterator() : node_(nullptr) {}
+   explicit node_iterator(inner_type *node) : node_(node) {}
+
+private:
+   friend class boost::iterator_core_access;
+   using this_type = node_iterator<DataType>;
+   void increment() { node_ = node_->next_; }
+   bool equal(const this_type &other) const { return node_->data_ = other.node_->data_; }
+   DataType &derference() const { return node_->data_; }
+   inner_type *node_;
+};
+
 * pointers and references
 ** types capable of holding pointer values for display/print
 uintptr_t
@@ -1181,3 +1283,55 @@ TEST_CASE_METHOD(Fixture, "tests needing fixture", "[fixture]")
   // subclass of Fixture, and so has access to public and protected
   // data members and member functions of Fixture
 }
+* benchmarking
+** turning off the optimizer
+*** escape
+static void escape(void *p)
+{
+  asm volatile("" : : "g"(p) : "memory");
+}
+**** prevents the compiler from optimizing away the pointer p
+*** clobber
+static void clobber()
+{
+  asm volatile("" : : : "memory");
+}
+**** forces the compiler to view all memory as dirty
+* profiling
+** use perf
+*** perf stat <program command line>
+run the program and print stats
+*** perf record <program command line>
+records execution of the program and dumps the result in a data file,
+as per a traditional profiler
+**** perf record -g <program command line>
+records call graph information along with the normal information
+***** %%%%%%%%%% IMPORTANT %%%%%%%%%%
+must compile the program with -fno-omit-frame-pointer in order to get
+stack information
+*** perf report
+analyze data stored by perf record
+**** perf report -g 'graph,0.5,caller'
+use previously stored call graph info from "perf record -g"
+***** detail on argument 'graph,0.5,caller'
+****** graph
+graph type (other possible argument is 'fractal')
+****** 0.5
+filter level: filters out noisy functions higher value to filter out
+more functions
+****** caller
+generate caller graph instead of callee graph, which is the default
+**** has an ncurses interface
+***** call graph info
+there will be '+' characters on the left, giving the same
+functionality as a tree view control; opened by moving the cursor to
+the line and pressing '<enter>'
+***** attribution
+the first column is "Children" which shows how much of the time was
+spent in the children of the function
+
+the second column is "Self" which show how much of the time was spent
+in the function itself
+***** annotate function
+move cursor to the line of a function and press 'a' to get the
+assembly code associated with the function
