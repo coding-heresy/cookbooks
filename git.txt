@@ -19,13 +19,17 @@ git branch -v -a
 e.g. for a branch named "test_branch":
 git checkout test_branch
 * file and directory operations
-** Delete a file
+** delete a file
 git rm <filename>
 git commit -m '<commit message>' <filename>
-** Move a file
+** move a file
 e.g.
 mkdir src
 git mv hello.cpp src
+** restore repository version of a file
+mv filename filename.bak
+git reset HEAD filename
+git checkout -- filename
 * pushing
 ** Push commits to remote master (commonly used for github)
 git push origin master
