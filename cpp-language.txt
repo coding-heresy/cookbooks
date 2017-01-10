@@ -623,6 +623,11 @@ new hotness
 use 'noexcept' keyword in signature
 *** e.g.
 void foo(int arg) noexcept;
+** declaring a function type with std::function
+function signature is declared in the specialization as
+<return_type(arg1type, arg2type, ...)>
+*** e.g. function taking int and returning string
+std::function<string(int)>
 
 * boost
 ** pointers (smart and otherwise)
@@ -745,7 +750,7 @@ desc.add_options()
   ("default,d", po::value<unsigned>()->default_value(69), "defaulted option")
   /* --copy or -c is a double value that is automatically copied to a variable */
   ("copy,c", po::value<double>(&copiedValue), "copied option");
-po::store(po::parse_command_line(argc, argv, desc), options)
+po::store(po::parse_command_line(argc, argv, desc), options);
 **** e.g. positional options
 #include <boost/program_options.hpp>
 // ...
