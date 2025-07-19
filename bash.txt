@@ -33,6 +33,9 @@ for x in ${foo[@]}; do
   echo $x
 done
 
+** iterate over lines in a file
+IFS=$'\n'; for LINE in $(cat somefile.txt); do echo ${LINE}; done
+
 * comparison with integer
 if [ $? -eq 0 ]
 then

@@ -28,3 +28,12 @@ causes
 QUOTEME(foo)
 to expand to "foo"
 
+* use #pragma to temporarily suppress a warning
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wwarning-name"
+
+// Code that generates the warning you want to suppress
+
+#pragma GCC diagnostic pop
+
+** the same pragma also works for clang

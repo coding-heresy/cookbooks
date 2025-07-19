@@ -27,5 +27,11 @@ sed 's/\S\+/\n/g'
 Actually replaces each contiguous block of whitespace characters with
 a single newline.
 
+* Remove spaces at the end of a line
+sed 's/ *$//'
+
+* Remove all matching lines
+sed '/part of a line to remove/d'
+
 * Replace newline with space
 Don't use sed, use tr.

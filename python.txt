@@ -1,0 +1,78 @@
+-*- Mode: Outline -*-
+
+* file/filesystem slapping
+** read file
+*** e.g.
+with open("myfile.txt", "r") as file:
+    for line in file:
+        print(line.strip())  # strip() removes trailing newlines
+** append to existing file
+fd = open("somefile.txt", "a")
+** overwrite existing file
+fd = open("somefile.txt", "w")
+** list files recursively
+*** e.g.
+import os
+
+for root, dirs, files in os.walk(path):
+    for file in files:
+        file_path = os.path.join(root, file)
+        print(file_path)
+** list files in a directory
+*** e.g.
+from os import listdir
+from os.path import isfile, join
+onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f))]
+*** c.f. https://stackoverflow.com/a/3207973
+** get directory name from file path
+*** e.g.
+import os
+os.path.dirname(file_path)
+
+* string slapping
+** remove whitespace from beginning and end of string
+*** e.g.
+str = ' Hello, World! '
+trimmed_str = str.strip()
+** quickly check if string ends with a specific substring
+*** e.g.
+str = 'Hello, World!'
+should_be_true = str.endswith('!')
+*** c.f. https://www.w3schools.com/python/ref_string_endswith.asp
+** quickly check if string begins with a specific substring
+*** e.g.
+str = 'Hello, World!'
+should_be_true = str.beginswith('Hello')
+** quickly remove a known prefix from a string
+*** e.g.
+str = 'Hello, World!'
+should_be_world = str.removeprefix('Hello, ')
+
+* regex slapping
+** module
+import re
+** search for pattern
+txt = "The rain in Spain"
+if re.search("^The.*Spain$", txt):
+    print("pattern was found")
+** c.f. https://www.w3schools.com/python/python_regex.asp
+
+* access program arguments
+** e.g.
+import sys
+
+print(f'program name is "{sys.argv[0]}"')
+for idx in range (1, len(sys.argv)):
+    print(f'argument [{idx}] is [{sys.argv[idx]}]')
+
+* list slapping
+** remove items from list by predicate
+e.g.
+deps = [s for s in deps if not s.startswith('$')]
+
+** remove items from list using filter() + lambda
+NOTE: this filters IN not OUT
+*** e.g. filter out odd numbers from a list
+a = [1, 2, 3, 4, 5, 6]
+b = filter(lambda x: X % 2 == 0, a)
+*** c.f. https://www.geeksforgeeks.org/filter-in-python/?ref=lbp

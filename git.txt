@@ -35,3 +35,32 @@ git checkout -- filename
 git push origin master
 * amend the most recent commit message
 git commit --amend -m "New commit message"
+* revert the most recent commit
+git reset --soft HEAD@{1}
+* create new local repo and add it to github
+** in local machine directory for the project
+*** initialize git support
+git init -b master
+*** add all files
+git add .
+*** make the first commit
+git commit -m 'first commit'
+** on github
+*** create new repository in home area
+do not initialize any files such as README.md, license, .gitignore
+*** on repository page, look for the Quick setup section
+*** select SSH instead of HTTP
+*** copy the URL
+** back in local machine directory for the project
+*** add origin
+git remote add origin <URL that was copied from new project page>
+*** test setup
+git remote -v
+*** push the changes
+git push origin master
+* ways to diff things
+** diff between 2 branches with meld
+*** set meld as the diff tool
+git config --global diff.tool meld
+*** perform the diff
+git difftool -d <branch 1> <branch 2>

@@ -1,14 +1,38 @@
 -*- Mode: Outline -*-
 
+* preprocessor
+** paste tokens
+*** use the ## preprocessor operator
+#define DECLARE_STRUCT_TYPE(name) typedef struct name##_s name##_t
+*** c.f. https://en.wikipedia.org/wiki/C_preprocessor#Token_concatenation
+* concepts
+** references
+https://andreasfertig.com/blog/2024/01/cpp20-concepts-applied/
 * input/output
 ** generic stream I/O
 *** input
 *** output
+**** binary format
+#include <bitset>
+#include <iomanip>
+
+int number;
+itset<32> binary(number);
+cout << setw(8) << setfill('0');
+cout << "Binary representation: " << binary.to_string() << endl;
+
 **** decimal precision
 ***** Set notation to fixed (scientific is alternative).
 cout.setf(ios::fixed,ios::floatfield);
 ***** Set number of digits past decimal in fixed and scientific.
 cout.precision(5);
+
+**** padding
+***** print leading zeros
+****** e.g. print in a width of 5 padded with leading zeros
+using namespace std;
+cout << setw(5) << setfill('0') << some_number << "\n";
+****** c.f. https://stackoverflow.com/a/530618
 
 **** generate output with ostream_iterator
 #include <iostream>
@@ -63,6 +87,9 @@ output.close();
 **** generate a temporary file
 boost::filesystem handles this, see the Boost section.
 
+** std::filesystem
+*** get path to temporary directory
+std::filesystem::temp_directory_path()
 * stack trace
 ** how to generate a stack trace
 *** e.g. from https://www.gnu.org/software/libc/manual/html_node/Backtraces.html
@@ -798,7 +825,7 @@ if (options.count("help")) {
 }
 **** note use of count() in place of a more complex call to find()
 
-** unit test
+** unit testing
 *** check that two values are equal
 BOOST_CHECK_EQUAL(val1, val2);
 *** check that a boolean value is true
@@ -1219,6 +1246,26 @@ directories that are also setuid will be loaded.
 Declare a volatile int variable and initialize it to 0.
 *** e.g. from clang-tidy LLVMTidyModule.cpp
 volatile int LLVMModuleAnchorSource = 0;
+* googletest testing framework
+** using a test fixture
+*** declare a fixture
+// NOTE: generally a good idea to fully resolve the testing namespace
+class SomeTest : public ::testing::Test {
+// NOTE: all member should be protected
+protected:
+  SomeTest() {
+    // setup here occurs on every test
+  }
+
+  SomeDataType dataMember;
+};
+*** write a test case using a fixture
+TEST_F(SomeTest, SmokeTest) {
+  const auto expected = SomeType();
+  dataMember.doSomething();
+  EXPECT_EQ(expected, dataMember.someValue());
+}
+
 * Catch testing framework
 ** tutorial
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
